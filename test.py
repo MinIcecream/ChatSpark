@@ -4,8 +4,9 @@ import openai
 from dotenv import load_dotenv
 
 load_dotenv()
-openai.api_key=os.getenv("API_KEY")
+openai.api_key=os.getenv("OPENAI_API_KEY")
 #openai-env\Scripts\activate
+#source openai-env/bin/activate
 messages=[{"role": "system", "content": "You are to return a conversation starter based on the messages you're given. Only return the conversation starter. Make it relevent to the conversation."}]
 
  
