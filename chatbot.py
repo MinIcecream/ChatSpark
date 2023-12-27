@@ -26,12 +26,14 @@ openai.api_key=os.getenv("OPENAI_API_KEY")
 #   messages=messages
 # )
 
-def generateResponse(messages):
-  print("GENERATING") 
-  completion =  openai.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=messages
-  ) 
-  print("CHatGPT REsposen: "+completion.choices[0].message)
-  return completion.choices[0].message
- 
+async def generate_response(messages):
+    print("GENERATING")
+    try: 
+        completion = openai.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=messages
+        ) 
+        print("ChatGPT Response: " + str(completion.choices[0].message.content))
+    except Exception as e:
+        print(f"Error during OpenAI API request: {e}")
+    return completion.choices[0].message

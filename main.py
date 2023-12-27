@@ -2,28 +2,26 @@ import os
 import time
 import azure.cognitiveservices.speech as speechsdk
 from dotenv import load_dotenv
-import chatbot
-import threading
-  
-def printCurrentMessage(messages):   
-    print("waiting")
+from chatbot import generate_response
+import asyncio 
 
-    outer_thread = threading.Thread(target=chatbot.generateResponse, args=(messages,))
-    outer_thread.start()
-    outer_thread.join()
+ 
+messages=[{"role":"system","content":"You are to return a conversation starter based on the messages you're given. Only return the conversation starter. Make it relevent to the conversation."}]
+  
+def print_current_response(messages):
+    asyncio.run(generate_response(messages))
 
 def conversation_transcriber_transcribed_cb(evt: speechsdk.SpeechRecognitionEventArgs):
-    # print("What's going on here?")
     print('TRANSCRIBED:')
     if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
-        print('\tText={}'.format(evt.result.text))
-        print('\tSpeaker ID={}'.format(evt.result.speaker_id))
-        message=evt.result.text
-        user=evt.result.speaker_id
+        message = evt.result.text
+        user = evt.result.speaker_id
+        print('\tText={}'.format(message))
+        print('\tSpeaker ID={}'.format(user))
 
-        newMessage={"user":user,"content":message}
-        messages.append(newMessage)  
-        printCurrentMessage(messages)
+        new_message = {"role": "user", "content": message}
+        messages.append(new_message)
+        print_current_response(messages)
  
  
 def recognize_from_mic():
@@ -37,11 +35,11 @@ def recognize_from_mic():
 
     transcribing_stop = False
 
-    def stop_cb(evt: speechsdk.SessionEventArgs):
-        #"""callback that signals to stop continuous recognition upon receiving an event `evt`"""
-        print('CLOSING on {}'.format(evt))
-        nonlocal transcribing_stop
-        transcribing_stop = True
+    # def stop_cb(evt: speechsdk.SessionEventArgs):
+    #     #"""callback that signals to stop continuous recognition upon receiving an event `evt`"""
+    #     print('CLOSING on {}'.format(evt))
+    #     nonlocal transcribing_stop
+    #     transcribing_stop = True
 
     # Connect callbacks to the events fired by the conversation transcriber
     conversation_transcriber.transcribed.connect(conversation_transcriber_transcribed_cb)  
@@ -51,18 +49,12 @@ def recognize_from_mic():
     # Waits for completion.
     while not transcribing_stop:
         time.sleep(.5)
-
-    print("Flag 2")
+ 
     conversation_transcriber.stop_transcribing_async()
 
 # Main 
 if __name__=="__main__":
 
-    currentMessage="Hey!"
-    messages=[{"role":"system","content":"You are to return a conversation starter based on the messages you're given. Only return the conversation starter. Make it relevent to the conversation."}]
-
     load_dotenv()
-    outer_thread = threading.Thread(target=recognize_from_mic)
-    outer_thread.start()
-    outer_thread.join()
+    recognize_from_mic()
 
