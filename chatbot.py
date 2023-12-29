@@ -1,8 +1,7 @@
  
 import os 
 import openai
-from dotenv import load_dotenv
-import threading
+from dotenv import load_dotenv 
 
 load_dotenv()
 openai.api_key=os.getenv("OPENAI_API_KEY")
@@ -26,7 +25,9 @@ openai.api_key=os.getenv("OPENAI_API_KEY")
 #   messages=messages
 # )
 
-async def generate_response(messages):
+ 
+async def generate_response(messages): 
+    
     print("GENERATING")
     try: 
         completion = openai.chat.completions.create(
@@ -34,6 +35,7 @@ async def generate_response(messages):
             messages=messages
         ) 
         print("ChatGPT Response: " + str(completion.choices[0].message.content))
+        return str(completion.choices[0].message.content)
+        
     except Exception as e:
-        print(f"Error during OpenAI API request: {e}")
-    return completion.choices[0].message
+        print(f"Error during OpenAI API request: {e}") 

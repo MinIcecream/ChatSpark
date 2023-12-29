@@ -2,18 +2,23 @@ import os
 import time
 import azure.cognitiveservices.speech as speechsdk
 from dotenv import load_dotenv
-from chatbot import generate_response
+import chatbot
 import asyncio 
-
+from textToSpeech import speak
  
+mostRecentResponse="Hey man!"
 messages=[{"role":"system","content":"You are to return a conversation starter based on the messages you're given. Only return the conversation starter. Make it relevent to the conversation."}]
-  
+
 def print_current_response(messages):
-    asyncio.run(generate_response(messages))
+    global mostRecentResponse
+    mostRecentResponse=asyncio.run(chatbot.generate_response(messages))
 
 def conversation_transcriber_transcribed_cb(evt: speechsdk.SpeechRecognitionEventArgs):
-    print('TRANSCRIBED:')
-    if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
+    if evt.result.text=="":
+        print("Nothing transcribed")  
+
+    elif evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
+        print('TRANSCRIBED:')
         message = evt.result.text
         user = evt.result.speaker_id
         print('\tText={}'.format(message))
@@ -21,8 +26,13 @@ def conversation_transcriber_transcribed_cb(evt: speechsdk.SpeechRecognitionEven
 
         new_message = {"role": "user", "content": message}
         messages.append(new_message)
-        print_current_response(messages)
+
  
+        print_current_response(messages) 
+ 
+        if message.lower()=="hello.":
+            print("keyword detected")
+            speak(mostRecentResponse)
  
 def recognize_from_mic():
     # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
