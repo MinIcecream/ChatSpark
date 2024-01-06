@@ -1,0 +1,1 @@
+ /Users/daniel/AndroidStudioProjects/ChatSpark/.dart_tool/flutter_build/8fd5fac4fd90a059e4d793b8b4e160ac/native_assets.yaml: 
