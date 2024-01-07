@@ -4,6 +4,10 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:web_socket_channel/io.dart';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 
 void main() {
   runApp(MyApp());
@@ -12,7 +16,7 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       home: MyHomePage(),
     );
   }
@@ -28,7 +32,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final recorder = FlutterSoundRecorder();
   final player = AudioPlayer();
-  late StreamSubscription<RecordingDisposition> _recorderSubscription;
+  FlutterFFmpeg flutterFFmpeg = FlutterFFmpeg();
+  final IOWebSocketChannel channel = IOWebSocketChannel.connect('ws://192.168.0.173:3000/');
 
   @override
   void initState() {
@@ -45,6 +50,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     recorder.closeRecorder();
 
+    channel.sink.close();
     player.dispose();
     super.dispose();
   }
@@ -68,9 +74,25 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final path = await recorder.stopRecorder();
       final audioFile = File(path!);
+      await flutterFFmpeg.execute(
+        '-i "/data/user/0/com.example.chatspark/cache/foo.mp4" -acodec pcm_s16le -ar 44100 "/data/user/0/com.example.chatspark/cache/foo.wav"',
+      );
+
       print("Saved audio at: $audioFile");
     } catch (e) {
       print("error stopping: $e");
+    }
+  }
+
+
+  Future<void> sendMp4File() async {
+    try {
+      String filePath = "/data/user/0/com.example.chatspark/cache/foo.wav";
+      File wavFile = File(filePath);
+      Uint8List wavBytes = await wavFile.readAsBytes();
+      channel.sink.add(wavBytes);
+    } catch (e) {
+      print('Error: $e');
     }
   }
 
@@ -83,28 +105,37 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         body: Center(
             child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              child: Icon(recorder.isRecording ? Icons.stop : Icons.mic),
-              onPressed: () async {
-                if (recorder.isRecording) {
-                  print("going to stop now");
-                  await stop();
-                } else {
-                  print("going to record now");
-                  await record();
-                }
-                setState(() {});
-              },
-            ),
-            ElevatedButton(
+            mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+              ElevatedButton(
+                child: Icon(recorder.isRecording ? Icons.stop : Icons.mic),
                 onPressed: () async {
-                  print("playing");
-                  await player.play(DeviceFileSource('/data/user/0/com.example.chatspark/cache/foo.mp4'));
+                  if (recorder.isRecording) {
+                    print("going to stop now");
+                    await stop();
+                  } else {
+                    print("going to record now");
+                    await record();
+                  }
+                  setState(() {});
                 },
-                child: const Icon(Icons.play_arrow)),
+              ),
+              ElevatedButton(
+                  onPressed: () async {
+                    print("playing");
+                    await player.play(DeviceFileSource('/data/user/0/com.example.chatspark/cache/foo.wav'));
+                  },
+                  child: const Icon(Icons.play_arrow)
+              ),
+              ElevatedButton(
+                onPressed: () async{
+                  await sendMp4File();
+                },
+                child: const Icon(Icons.send)
+            ),
           ],
-        )));
+        )
+      )
+    );
   }
 }

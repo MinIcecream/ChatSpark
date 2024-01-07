@@ -66,6 +66,10 @@ file
 3.0
 file:///Users/daniel/.pub-cache/hosted/pub.dev/file-7.0.0/
 file:///Users/daniel/.pub-cache/hosted/pub.dev/file-7.0.0/lib/
+flutter_ffmpeg
+2.12
+file:///Users/daniel/.pub-cache/hosted/pub.dev/flutter_ffmpeg-0.4.2/
+file:///Users/daniel/.pub-cache/hosted/pub.dev/flutter_ffmpeg-0.4.2/lib/
 flutter_lints
 2.19
 file:///Users/daniel/.pub-cache/hosted/pub.dev/flutter_lints-2.0.3/
@@ -230,6 +234,10 @@ web
 3.2
 file:///Users/daniel/.pub-cache/hosted/pub.dev/web-0.3.0/
 file:///Users/daniel/.pub-cache/hosted/pub.dev/web-0.3.0/lib/
+web_socket_channel
+2.15
+file:///Users/daniel/.pub-cache/hosted/pub.dev/web_socket_channel-2.4.0/
+file:///Users/daniel/.pub-cache/hosted/pub.dev/web_socket_channel-2.4.0/lib/
 win32
 3.2
 file:///Users/daniel/.pub-cache/hosted/pub.dev/win32-5.2.0/
@@ -238,10 +246,6 @@ xdg_directories
 3.0
 file:///Users/daniel/.pub-cache/hosted/pub.dev/xdg_directories-1.0.4/
 file:///Users/daniel/.pub-cache/hosted/pub.dev/xdg_directories-1.0.4/lib/
-chatspark
-3.2
-file:///Users/daniel/AndroidStudioProjects/ChatSpark/
-file:///Users/daniel/AndroidStudioProjects/ChatSpark/lib/
 sky_engine
 3.2
 file:///Users/daniel/Development/flutter/bin/cache/pkg/sky_engine/
@@ -258,4 +262,8 @@ flutter_web_plugins
 3.2
 file:///Users/daniel/Development/flutter/packages/flutter_web_plugins/
 file:///Users/daniel/Development/flutter/packages/flutter_web_plugins/lib/
+chatspark
+3.2
+file:///Users/daniel/Projects/ChatSpark/ChatSpark/
+file:///Users/daniel/Projects/ChatSpark/ChatSpark/lib/
 2

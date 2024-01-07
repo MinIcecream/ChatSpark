@@ -35,7 +35,6 @@ def conversation_transcriber_transcribed_cb(evt: speechsdk.SpeechRecognitionEven
             speak(mostRecentResponse)
  
 def recognize_from_mic():
-    # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
     speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_API_KEY'), region="eastus")
     speech_config.speech_recognition_language="en-US"
 
@@ -45,13 +44,6 @@ def recognize_from_mic():
 
     transcribing_stop = False
 
-    # def stop_cb(evt: speechsdk.SessionEventArgs):
-    #     #"""callback that signals to stop continuous recognition upon receiving an event `evt`"""
-    #     print('CLOSING on {}'.format(evt))
-    #     nonlocal transcribing_stop
-    #     transcribing_stop = True
-
-    # Connect callbacks to the events fired by the conversation transcriber
     conversation_transcriber.transcribed.connect(conversation_transcriber_transcribed_cb)  
 
     conversation_transcriber.start_transcribing_async()
@@ -62,9 +54,37 @@ def recognize_from_mic():
  
     conversation_transcriber.stop_transcribing_async()
 
+#prolly returns transcription on end callback function. Need to implement
+def transcribe_file():
+    speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_API_KEY'), region="eastus")
+    speech_config.speech_recognition_language="en-US"
+
+    #use_default_microphone=True
+    audio_config = speechsdk.audio.AudioConfig(filename="audio_files/katiesteve.wav")
+    conversation_transcriber = speechsdk.transcription.ConversationTranscriber(speech_config=speech_config, audio_config=audio_config)
+
+    transcribing_stop = False
+
+    conversation_transcriber.transcribed.connect(file_transcribed_cb)  
+
+    conversation_transcriber.start_transcribing_async()
+
+    # Waits for completion.
+    while not transcribing_stop:
+        time.sleep(.5)
+ 
+    conversation_transcriber.stop_transcribing_async()
+
+def file_transcribed_cb(): 
+    if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
+        print('TRANSCRIBED:')
+        message = evt.result.text
+        user = evt.result.speaker_id
+        print('\tText={}'.format(message))
+        print('\tSpeaker ID={}'.format(user)) 
 # Main 
 if __name__=="__main__":
 
     load_dotenv()
-    recognize_from_mic()
+    transcribe_file()
 

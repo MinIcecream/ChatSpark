@@ -5,6 +5,7 @@ audioplayers_darwin=/Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_darwin-
 audioplayers_linux=/Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_linux-3.1.0/
 audioplayers_web=/Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_web-4.1.0/
 audioplayers_windows=/Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_windows-3.1.0/
+flutter_ffmpeg=/Users/daniel/.pub-cache/hosted/pub.dev/flutter_ffmpeg-0.4.2/
 flutter_sound=/Users/daniel/.pub-cache/hosted/pub.dev/flutter_sound-9.2.13/
 flutter_sound_web=/Users/daniel/.pub-cache/hosted/pub.dev/flutter_sound_web-9.2.13/
 path_provider=/Users/daniel/.pub-cache/hosted/pub.dev/path_provider-2.1.1/
