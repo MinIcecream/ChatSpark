@@ -5,14 +5,19 @@ from dotenv import load_dotenv
 import chatbot
 import asyncio 
 from textToSpeech import speak
+import json
  
 mostRecentResponse="Hey man!"
-messages=[{"role":"system","content":"You are to return a conversation starter based on the messages you're given. Only return the conversation starter. Make it relevent to the conversation."}]
 
-def print_current_response(messages):
+def print_new_response():
     global mostRecentResponse
+    try:
+        with open("message_log.json", 'r') as file:
+             messages = json.load(file)
+    except:
+        messages=[]
     mostRecentResponse=asyncio.run(chatbot.generate_response(messages))
-
+""" 
 def conversation_transcriber_transcribed_cb(evt: speechsdk.SpeechRecognitionEventArgs):
     if evt.result.text=="":
         print("Nothing transcribed")  
@@ -53,38 +58,72 @@ def recognize_from_mic():
         time.sleep(.5)
  
     conversation_transcriber.stop_transcribing_async()
+ """
 
-#prolly returns transcription on end callback function. Need to implement
+def transcribed_cb(evt: speechsdk.SpeechRecognitionEventArgs): 
+    if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech: 
+        save_message_to_logs(evt.result.speaker_id,evt.result.text)
+
+
 def transcribe_file():
+    # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
     speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_API_KEY'), region="eastus")
     speech_config.speech_recognition_language="en-US"
 
-    #use_default_microphone=True
-    audio_config = speechsdk.audio.AudioConfig(filename="audio_files/katiesteve.wav")
+    audio_config = speechsdk.audio.AudioConfig(filename="audio_files/test.wav")
     conversation_transcriber = speechsdk.transcription.ConversationTranscriber(speech_config=speech_config, audio_config=audio_config)
 
     transcribing_stop = False
 
-    conversation_transcriber.transcribed.connect(file_transcribed_cb)  
+    def stop_cb(evt: speechsdk.SessionEventArgs):
+        #"""callback that signals to stop continuous recognition upon receiving an event `evt`"""
+        print('CLOSING on {}'.format(evt))
+        nonlocal transcribing_stop
+        transcribing_stop = True
+
+    # Connect callbacks to the events fired by the conversation transcriber
+    conversation_transcriber.transcribed.connect(transcribed_cb) 
+    # stop transcribing on either session stopped or canceled events
+    conversation_transcriber.session_stopped.connect(stop_cb)
+    conversation_transcriber.canceled.connect(stop_cb)
 
     conversation_transcriber.start_transcribing_async()
 
     # Waits for completion.
     while not transcribing_stop:
         time.sleep(.5)
- 
+
     conversation_transcriber.stop_transcribing_async()
 
-def file_transcribed_cb(): 
-    if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
-        print('TRANSCRIBED:')
-        message = evt.result.text
-        user = evt.result.speaker_id
-        print('\tText={}'.format(message))
-        print('\tSpeaker ID={}'.format(user)) 
+def save_message_to_logs(speaker, content):
+    try:
+        with open("message_log.json", 'r') as file:
+             messages = json.load(file)
+    except:
+        messages=[]
+          
+    new_message={"role": "user", "content": speaker+": "+content}
+    messages.append(new_message)
+
+    with open('message_log.json', 'w') as file:
+        json.dump(messages, file, indent=2)
+
+    print_new_response()
+
+def clear_logs():
+    try:
+        with open("log_template.json", 'r') as file:
+            messages = json.load(file)
+    except:
+        messages=[]
+           
+    with open('message_log.json', 'w') as file:
+        json.dump(messages, file, indent=2)
+
+
 # Main 
 if __name__=="__main__":
 
     load_dotenv()
-    transcribe_file()
+    clear_logs()
 

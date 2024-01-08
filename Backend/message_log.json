@@ -1,0 +1,6 @@
+[
+  {
+    "role": "system",
+    "content": "Return a conversation starter based on the messages you're given. Only return the conversation starter. Make it relevent to the conversation."
+  }
+]
