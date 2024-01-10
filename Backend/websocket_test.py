@@ -1,7 +1,7 @@
 import asyncio
 import websockets
 import base64
-import main
+import terraria
 import wave
 import test
 
@@ -11,7 +11,7 @@ async def add_to_buffer(websocket, path, buffer):
     try: 
         while True:
             data = await websocket.recv()    
-            print(f"Received {len(data)} bytes")  
+            #print(f"Received {len(data)} bytes")  
             await buffer.put(data) 
     except websockets.exceptions.ConnectionClosedOK:
         pass
@@ -33,12 +33,12 @@ async def write_queue_to_wav(queue, output_file_path, sample_width=2, channels=1
                     break  # End the loop when None is received
                 # Write the audio data to the WAV file 
                 try:
-                    test.stream.write(audio_data)
-                    print("pushed to stream!")
+                    terraria.stream.write(audio_data)
+                    #print("pushed to stream!")
                 except Exception as e:
                     print("error: "+str(e)) 
                 output_file.writeframes(audio_data)
-                print(f"Appended {len(audio_data)} bytes to {output_file_path}")
+                #print(f"Appended {len(audio_data)} bytes to {output_file_path}")
 
     except asyncio.CancelledError:
         pass
@@ -49,6 +49,7 @@ async def start_server():
 
     output_file_path="audio_files/output.wav"
     write_task = asyncio.create_task(write_queue_to_wav(buffer, output_file_path))
+    asyncio.create_task(terraria.recognize_from_stream())
     print("WebSocket server started...")
 
     await asyncio.sleep(30)
