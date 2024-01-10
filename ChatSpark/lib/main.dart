@@ -5,7 +5,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:web_socket_channel/io.dart';
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 
@@ -32,8 +31,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final recorder = FlutterSoundRecorder();
   final player = AudioPlayer();
-  FlutterFFmpeg flutterFFmpeg = FlutterFFmpeg();
   final IOWebSocketChannel channel = IOWebSocketChannel.connect('ws://192.168.0.173:3000/');
+  bool isRecorderReady=false;
+  StreamSubscription? recordingSubscription;
 
   @override
   void initState() {
@@ -42,8 +42,16 @@ class _MyHomePageState extends State<MyHomePage> {
       print("done playing");
     });
     initRecorder();
+  }
 
-    print("done initializing");
+  Future initRecorder() async {
+    final status = await Permission.microphone.request();
+
+    if (status != PermissionStatus.granted) {
+      throw "mic permission not granted!!";
+    }
+    await recorder.openRecorder();
+    isRecorderReady=true;
   }
 
   @override
@@ -55,32 +63,31 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-  Future initRecorder() async {
-    final status = await Permission.microphone.request();
-
-    if (status != PermissionStatus.granted) {
-      throw "mic permission not granted!!";
-    }
-    await recorder.openRecorder();
-  }
 
   Future record() async {
-    print("starting recorder");
-    await recorder.startRecorder(toFile: 'foo.mp4', codec: Codec.aacMP4);
-    print("recorder started!");
+    assert(isRecorderReady);
+    var recordingDataController = StreamController<Food>();
+    recordingSubscription =
+        recordingDataController.stream.listen((buffer) {
+          if (buffer is FoodData) {
+            print("sending");
+            channel.sink.add(buffer.data!);
+          }
+        });
+    await recorder.startRecorder(
+      toStream: recordingDataController.sink,
+      codec: Codec.pcm16,
+      numChannels: 1,
+      sampleRate: 16000,
+    );
+    setState(() {});
   }
 
   Future stop() async {
-    try {
-      final path = await recorder.stopRecorder();
-      final audioFile = File(path!);
-      await flutterFFmpeg.execute(
-        '-i "/data/user/0/com.example.chatspark/cache/foo.mp4" -acodec pcm_s16le -ar 44100 "/data/user/0/com.example.chatspark/cache/foo.wav"',
-      );
-
-      print("Saved audio at: $audioFile");
-    } catch (e) {
-      print("error stopping: $e");
+    await recorder.stopRecorder();
+    if (recordingSubscription != null) {
+      await recordingSubscription!.cancel();
+      recordingSubscription = null;
     }
   }
 
