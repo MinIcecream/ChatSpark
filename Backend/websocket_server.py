@@ -1,15 +1,20 @@
 import asyncio
 import websockets
 import base64
-import terraria
-import wave
-import test
+import transcriber
+import wave 
 
-cancel=False 
+client=None
 
-async def add_to_buffer(websocket, path, buffer):   
+async def send_data_to_client(websocket, data): 
+    await client.send(data)
+
+
+async def add_to_buffer(websocket, path, buffer):    
+    global client
     try: 
-        while True:
+        client = websocket
+        while True: 
             data = await websocket.recv()    
             #print(f"Received {len(data)} bytes")  
             await buffer.put(data) 
@@ -17,6 +22,8 @@ async def add_to_buffer(websocket, path, buffer):
         pass
     except websockets.exceptions.ConnectionClosedError:
         print("connection closed!")
+    finally: 
+        client=None
 
 
 async def write_queue_to_wav(queue, output_file_path, sample_width=2, channels=1, sample_rate=16000):
@@ -33,7 +40,7 @@ async def write_queue_to_wav(queue, output_file_path, sample_width=2, channels=1
                     break  # End the loop when None is received
                 # Write the audio data to the WAV file 
                 try:
-                    terraria.stream.write(audio_data)
+                    transcriber.stream.write(audio_data)
                     #print("pushed to stream!")
                 except Exception as e:
                     print("error: "+str(e)) 
@@ -49,10 +56,10 @@ async def start_server():
 
     output_file_path="audio_files/output.wav"
     write_task = asyncio.create_task(write_queue_to_wav(buffer, output_file_path))
-    asyncio.create_task(terraria.recognize_from_stream())
+    asyncio.create_task(transcriber.recognize_from_stream())
     print("WebSocket server started...")
 
-    await asyncio.sleep(30)
+    await asyncio.sleep(90)
     print("time limit hit...closing connection")
 
     server.close() 

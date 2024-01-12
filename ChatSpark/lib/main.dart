@@ -5,8 +5,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:web_socket_channel/io.dart';
-import 'dart:typed_data';
-import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 
 void main() {
   runApp(MyApp());
@@ -35,11 +33,20 @@ class _MyHomePageState extends State<MyHomePage> {
   bool isRecorderReady=false;
   StreamSubscription? recordingSubscription;
 
+
   @override
   void initState() {
     super.initState();
     player.onPlayerComplete.listen((_) {
       print("done playing");
+    });
+    channel.stream.listen((data)
+    {
+      print("Received: $data");
+    }, onDone:(){
+      print("Websocket closed");
+    }, onError:(error){
+      print("Error: $error");
     });
     initRecorder();
   }
