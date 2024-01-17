@@ -29,7 +29,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final recorder = FlutterSoundRecorder();
   final player = AudioPlayer();
-  final IOWebSocketChannel channel = IOWebSocketChannel.connect('ws://192.168.0.173:3000/');
+  final IOWebSocketChannel channel = IOWebSocketChannel.connect('ws://10.34.158.246:3000/');
   bool isRecorderReady=false;
   StreamSubscription? recordingSubscription;
 
@@ -77,7 +77,6 @@ class _MyHomePageState extends State<MyHomePage> {
     recordingSubscription =
         recordingDataController.stream.listen((buffer) {
           if (buffer is FoodData) {
-            print("sending");
             channel.sink.add(buffer.data!);
           }
         });
@@ -100,14 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
   Future<void> sendMp4File() async {
-    try {
-      String filePath = "/data/user/0/com.example.chatspark/cache/foo.wav";
-      File wavFile = File(filePath);
-      Uint8List wavBytes = await wavFile.readAsBytes();
-      channel.sink.add(wavBytes);
-    } catch (e) {
-      print('Error: $e');
-    }
+    channel.sink.add("HELLO FROM CLIENT@@!!!");
   }
 
   @override

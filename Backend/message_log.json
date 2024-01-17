@@ -1,14 +1,6 @@
 [
   {
     "role": "system",
-    "content": "Return a conversation starter based on the messages you're given. Only return the conversation starter. Make it relevent to the conversation."
-  },
-  {
-    "role": "user",
-    "content": "Guest-1: With him in."
-  },
-  {
-    "role": "user",
-    "content": "Guest-1: What's up?"
+    "content": "Two users are having a conversation with each other but there is an awkward silence and they do not know how to continue the conversation. Write a follow-up for Guest-1 based on the context of the conversation. This can either be a one-sentence lead into a new topic or continuation of the conversation-this is context dependent."
   }
 ]
