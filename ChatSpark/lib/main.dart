@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
@@ -29,19 +30,23 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final recorder = FlutterSoundRecorder();
   final player = AudioPlayer();
-  final IOWebSocketChannel channel = IOWebSocketChannel.connect('ws://10.34.158.246:3000/');
+  final IOWebSocketChannel channel = IOWebSocketChannel.connect('ws://10.34.211.35:3000/');
   bool isRecorderReady=false;
   StreamSubscription? recordingSubscription;
+  late FlutterTts flutterTts;
+
+  var response="How was your day?";
 
 
   @override
   void initState() {
+    flutterTts = FlutterTts();
+
     super.initState();
-    player.onPlayerComplete.listen((_) {
-      print("done playing");
-    });
     channel.stream.listen((data)
     {
+      response=data;
+      speak();
       print("Received: $data");
     }, onDone:(){
       print("Websocket closed");
@@ -50,7 +55,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     initRecorder();
   }
-
   Future initRecorder() async {
     final status = await Permission.microphone.request();
 
@@ -70,14 +74,14 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-
   Future record() async {
     assert(isRecorderReady);
     var recordingDataController = StreamController<Food>();
     recordingSubscription =
         recordingDataController.stream.listen((buffer) {
           if (buffer is FoodData) {
-            channel.sink.add(buffer.data!);
+            var bufferData=buffer.data;
+            channel.sink.add('{"type": "audio", "payload": $bufferData}');
           }
         });
     await recorder.startRecorder(
@@ -97,9 +101,11 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-
-  Future<void> sendMp4File() async {
-    channel.sink.add("HELLO FROM CLIENT@@!!!");
+  Future speak() async {
+    recorder.pauseRecorder();
+    await flutterTts.awaitSpeakCompletion(true);
+    await flutterTts.speak(response);
+    recorder.resumeRecorder();
   }
 
   @override
@@ -113,6 +119,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Text(response),
               ElevatedButton(
                 child: Icon(recorder.isRecording ? Icons.stop : Icons.mic),
                 onPressed: () async {
@@ -129,16 +136,10 @@ class _MyHomePageState extends State<MyHomePage> {
               ElevatedButton(
                   onPressed: () async {
                     print("playing");
-                    await player.play(DeviceFileSource('/data/user/0/com.example.chatspark/cache/foo.wav'));
+                    await speak();
                   },
                   child: const Icon(Icons.play_arrow)
               ),
-              ElevatedButton(
-                onPressed: () async{
-                  await sendMp4File();
-                },
-                child: const Icon(Icons.send)
-            ),
           ],
         )
       )

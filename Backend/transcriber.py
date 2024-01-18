@@ -5,12 +5,15 @@ from dotenv import load_dotenv
 import chatbot
 import asyncio  
 import json
-import wave    
+import re
 
 response="Hey man!"  
 stream=speechsdk.audio.PushAudioInputStream()
+keyword_detected=False
+
 def get_response(): 
     return response
+ 
 async def recognize_from_stream():   
     speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_API_KEY'), region="eastus")
     speech_config.speech_recognition_language="en-US"
@@ -25,7 +28,11 @@ async def recognize_from_stream():
 
     async def transcribed_cb(evt):
         print(evt.result.speaker_id+": "+evt.result.text)
-        asyncio.create_task(save_message_to_logs(evt.result.speaker_id,evt.result.text))
+        if re.sub('[^a-zA-Z]', '', evt.result.text.lower()) =="hello":
+            global keyword_detected
+            keyword_detected=True
+        else:
+            asyncio.create_task(save_message_to_logs(evt.result.speaker_id,evt.result.text))
  
     # Connect callbacks to the events fired by the conversation transcriber
     speech_recognizer.transcribed.connect(lambda evt:asyncio.run(transcribed_cb(evt)))

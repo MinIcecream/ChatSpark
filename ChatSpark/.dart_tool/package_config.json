@@ -146,6 +146,12 @@
       "languageVersion": "3.2"
     },
     {
+      "name": "flutter_tts",
+      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/flutter_tts-3.8.5",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "flutter_web_plugins",
       "rootUri": "file:///Users/daniel/Development/flutter/packages/flutter_web_plugins",
       "packageUri": "lib/",
@@ -404,7 +410,7 @@
       "languageVersion": "3.2"
     }
   ],
-  "generated": "2024-01-07T02:39:17.057697Z",
+  "generated": "2024-01-17T17:19:52.644269Z",
   "generator": "pub",
   "generatorVersion": "3.2.3"
 }

@@ -8,6 +8,7 @@ audioplayers_windows=/Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_window
 flutter_ffmpeg=/Users/daniel/.pub-cache/hosted/pub.dev/flutter_ffmpeg-0.4.2/
 flutter_sound=/Users/daniel/.pub-cache/hosted/pub.dev/flutter_sound-9.2.13/
 flutter_sound_web=/Users/daniel/.pub-cache/hosted/pub.dev/flutter_sound_web-9.2.13/
+flutter_tts=/Users/daniel/.pub-cache/hosted/pub.dev/flutter_tts-3.8.5/
 path_provider=/Users/daniel/.pub-cache/hosted/pub.dev/path_provider-2.1.1/
 path_provider_android=/Users/daniel/.pub-cache/hosted/pub.dev/path_provider_android-2.2.2/
 path_provider_foundation=/Users/daniel/.pub-cache/hosted/pub.dev/path_provider_foundation-2.3.1/
