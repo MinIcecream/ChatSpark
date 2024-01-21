@@ -1,14 +1,11 @@
  
 import os 
-import openai
-from dotenv import load_dotenv  
+import openai 
 
-load_dotenv()
-openai.api_key=os.getenv("OPENAI_API_KEY")
+openai.api_key=os.environ.get("OPENAI_API_KEY")
 
- 
-async def generate_response(message): 
-     
+#Takes in context messages, returns generated response
+async def generate_response(message):  
     try: 
         completion = openai.chat.completions.create(
             model="gpt-3.5-turbo",
