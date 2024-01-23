@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:web_socket_channel/io.dart';
 
@@ -15,7 +14,29 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: MyHomePage(),
+      home: LoginPage(),
+    );
+  }
+}
+class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.blue,
+      ),
+      body: Center(
+        child: TextButton(
+          child: const Text("Login"),
+          onPressed: (){
+            Navigator.push(context,MaterialPageRoute(builder:(context){
+              return const MyHomePage();
+            }));
+          },
+        ),
+      ),
     );
   }
 }
@@ -40,21 +61,21 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    flutterTts = FlutterTts();
-
     super.initState();
+
+    flutterTts = FlutterTts();
     channel.stream.listen((data)
     {
       response=data;
       speak();
-      print("Received: $data");
     }, onDone:(){
-      print("Websocket closed");
+      print("Disconnecting from channel");
     }, onError:(error){
-      print("Error: $error");
+      throw "Error receiving data";
     });
     initRecorder();
   }
+
   Future initRecorder() async {
     final status = await Permission.microphone.request();
 
@@ -111,34 +132,38 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white70,
         appBar: AppBar(
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.orange,
           title: const Text("Audio Recorder"),
         ),
         body: Center(
             child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(response),
+                Container(
+                  width:200,
+                  height:100,
+                  padding:const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    borderRadius:BorderRadius.circular(10.0),
+                    color:Colors.white70,
+                  ),
+                  child:Center(
+                    child: Text(response),
+                  )
+                ),
+              const SizedBox(height:20),
               ElevatedButton(
                 child: Icon(recorder.isRecording ? Icons.stop : Icons.mic),
                 onPressed: () async {
                   if (recorder.isRecording) {
-                    print("going to stop now");
                     await stop();
                   } else {
-                    print("going to record now");
                     await record();
                   }
                   setState(() {});
                 },
-              ),
-              ElevatedButton(
-                  onPressed: () async {
-                    print("playing");
-                    await speak();
-                  },
-                  child: const Icon(Icons.play_arrow)
               ),
           ],
         )
