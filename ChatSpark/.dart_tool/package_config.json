@@ -8,48 +8,6 @@
       "languageVersion": "2.18"
     },
     {
-      "name": "audioplayers",
-      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/audioplayers-5.2.1",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
-      "name": "audioplayers_android",
-      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_android-4.0.3",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
-      "name": "audioplayers_darwin",
-      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_darwin-5.0.2",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
-      "name": "audioplayers_linux",
-      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_linux-3.1.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
-      "name": "audioplayers_platform_interface",
-      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_platform_interface-6.1.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
-      "name": "audioplayers_web",
-      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_web-4.1.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
-      "name": "audioplayers_windows",
-      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_windows-3.1.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
       "name": "boolean_selector",
       "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/boolean_selector-2.1.1",
       "packageUri": "lib/",
@@ -98,20 +56,14 @@
       "languageVersion": "3.0"
     },
     {
-      "name": "file",
-      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/file-7.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
       "name": "flutter",
       "rootUri": "file:///Users/daniel/Development/flutter/packages/flutter",
       "packageUri": "lib/",
       "languageVersion": "3.2"
     },
     {
-      "name": "flutter_ffmpeg",
-      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/flutter_ffmpeg-0.4.2",
+      "name": "flutter_dotenv",
+      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/flutter_dotenv-5.1.0",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -156,18 +108,6 @@
       "rootUri": "file:///Users/daniel/Development/flutter/packages/flutter_web_plugins",
       "packageUri": "lib/",
       "languageVersion": "3.2"
-    },
-    {
-      "name": "http",
-      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/http-1.1.2",
-      "packageUri": "lib/",
-      "languageVersion": "3.2"
-    },
-    {
-      "name": "http_parser",
-      "rootUri": "file:///Users/daniel/.pub-cache/hosted/pub.dev/http_parser-4.0.2",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
     },
     {
       "name": "js",
@@ -410,7 +350,7 @@
       "languageVersion": "3.2"
     }
   ],
-  "generated": "2024-01-17T17:19:52.644269Z",
+  "generated": "2024-01-28T22:28:49.935995Z",
   "generator": "pub",
   "generatorVersion": "3.2.3"
 }

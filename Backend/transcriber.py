@@ -6,6 +6,7 @@ import json
 import re
 import database_interface as db
 
+#Transcriber class that handles STT with Azure
 class Transcriber:
     def __init__(self, client):
         self.client=client
@@ -19,7 +20,7 @@ class Transcriber:
         instance=cls(client)
         return instance 
  
-    #Getter function used by server
+    #Getter function used by server. Returns current response
     def get_response(self): 
         return self.response
     
@@ -27,6 +28,7 @@ class Transcriber:
     async def transcribed_cb(self, evt):
         print(evt.result.speaker_id+": "+evt.result.text)
         
+        #If keyword detected, raise flag. Otherwise, save to db
         if re.sub('[^a-zA-Z]', '', evt.result.text.lower()) ==self.keyword:
             self.keyword_detected=True
         else:
@@ -62,18 +64,8 @@ class Transcriber:
             await asyncio.sleep(.5)
         speech_recognizer.stop_transcribing_async() 
 
-    #Clears message logs. Used by server when client disconnects
-    def clear_logs():
-        try:
-            with open("log_template.json", 'r') as file:
-                messages = json.load(file)
-        except:
-            messages=[]
-            
-        with open('message_log.json', 'w') as file:
-            json.dump(messages, file, indent=2)
-
     #Saves a message to message logs. Used by transciber when a new message is transcribed.
+    #Updates response
     async def save_message_to_db(self, speaker, content):
         db.add_message_to_db(self.client, speaker + ": "+content) 
         self.response=await chatbot.generate_response(self.client)  

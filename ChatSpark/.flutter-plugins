@@ -1,11 +1,4 @@
 # This is a generated file; do not edit or check into version control.
-audioplayers=/Users/daniel/.pub-cache/hosted/pub.dev/audioplayers-5.2.1/
-audioplayers_android=/Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_android-4.0.3/
-audioplayers_darwin=/Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_darwin-5.0.2/
-audioplayers_linux=/Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_linux-3.1.0/
-audioplayers_web=/Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_web-4.1.0/
-audioplayers_windows=/Users/daniel/.pub-cache/hosted/pub.dev/audioplayers_windows-3.1.0/
-flutter_ffmpeg=/Users/daniel/.pub-cache/hosted/pub.dev/flutter_ffmpeg-0.4.2/
 flutter_sound=/Users/daniel/.pub-cache/hosted/pub.dev/flutter_sound-9.2.13/
 flutter_sound_web=/Users/daniel/.pub-cache/hosted/pub.dev/flutter_sound_web-9.2.13/
 flutter_tts=/Users/daniel/.pub-cache/hosted/pub.dev/flutter_tts-3.8.5/

@@ -1,19 +1,20 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:web_socket_channel/io.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+void main() async{
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 class WebSocketManager {
   StreamController? controller;
   static final WebSocketManager instance = WebSocketManager._internal();
   IOWebSocketChannel? channel;
+  final address=dotenv.env['IP_ADDRESS'];
 
   factory WebSocketManager() {
     return instance;
@@ -32,8 +33,8 @@ class WebSocketManager {
     }
 
     // Establish a new WebSocket connection
-    channel = IOWebSocketChannel.connect(Uri.parse('ws://10.34.211.35:3000/'));
-
+    //channel = IOWebSocketChannel.connect(Uri.parse('ws://10.34.211.35:3000/'));
+    channel = IOWebSocketChannel.connect(Uri.parse('ws://${address!}:3000/'));
     // Listen to the new channel
     channel!.stream.listen((data) {
       // Check if controller is closed, and if so, do not add data to it
@@ -225,7 +226,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final recorder = FlutterSoundRecorder();
-  final player = AudioPlayer();
   bool isRecorderReady = false;
   StreamSubscription? recordingSubscription;
   late FlutterTts flutterTts;
@@ -265,7 +265,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     recorder.closeRecorder();
 
-    player.dispose();
     WebSocketManager().disconnect();
     WebSocketManager().connect();
     print("DONE CONNECTING");

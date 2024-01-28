@@ -47,7 +47,7 @@ def add_user_to_db(username, password):
     connection.commit() 
     return True
 
-#Checks if user exists in the database.
+#Checks if user exists in the database
 def authenticate_user(username, password):
     cursor.execute("SELECT * FROM users WHERE username=:username AND password=:password",(username,password))
     result=cursor.fetchone()
@@ -55,10 +55,12 @@ def authenticate_user(username, password):
         return True 
     return False
 
+#Resets users table
 def delete_all_users():
     cursor.execute("DELETE FROM users")
     connection.commit()
 
+#Returns all messaages from a user
 def get_user_messages(user):
     cursor.execute("SELECT message FROM messages WHERE client_username=:username",(user,))
     return cursor.fetchall()
