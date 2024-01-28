@@ -25,8 +25,7 @@ def add_message_to_db(username, message):
     #Check if username is existing user
     cursor.execute("SELECT * FROM users WHERE username=:username",(username,))
     result=cursor.fetchone()
-    if result is None:
-        print("User does not exist!")
+    if result is None: 
         return
     
     cursor.execute("INSERT INTO messages(client_username, message) Values(:username, :message)",(username, message))
@@ -41,23 +40,19 @@ def clear_user_messages_from_db(user):
 def add_user_to_db(username, password):
     cursor.execute("SELECT * FROM users WHERE username=:username",(username,))
     result=cursor.fetchone()
-    if result is not None:
-        print("Username taken!")
+    if result is not None: 
         return False 
     
     cursor.execute("INSERT INTO users(username, password) Values(:username, :password)",(username,password))
-    connection.commit()
-    print("user succesfully registered!")
+    connection.commit() 
     return True
 
 #Checks if user exists in the database.
 def authenticate_user(username, password):
     cursor.execute("SELECT * FROM users WHERE username=:username AND password=:password",(username,password))
     result=cursor.fetchone()
-    if result is not None:
-        print("User logged in!")
-        return True
-    print("User does not exist!")
+    if result is not None: 
+        return True 
     return False
 
 def delete_all_users():

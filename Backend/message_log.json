@@ -2,5 +2,17 @@
   {
     "role": "system",
     "content": "Two users are having a conversation with each other but there is an awkward silence and they do not know how to continue the conversation. Write a follow-up for Guest-1 based on the context of the conversation. This can either be a lead into a new topic or continuation of the conversation-this is context dependent. In your response DO NOT include the speaker, such as the words 'Guest 1:', only the sentence they should say itself. Keep it less than 10 words."
+  },
+  {
+    "role": "user",
+    "content": "Guest-1: Yo, what's up?"
+  },
+  {
+    "role": "user",
+    "content": "Guest-1: I really like dogs."
+  },
+  {
+    "role": "user",
+    "content": "Guest-1: Anyways, my dog died."
   }
 ]

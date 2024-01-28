@@ -1,17 +1,17 @@
 import asyncio
 import websockets 
-import transcriber  
+from transcriber import Transcriber
 import json
 import os 
 from dotenv import load_dotenv
 import database_interface as db
-
-client=None
+import wave
+ 
 #Keeps track of current websocket client
 clients=set()
 
 #Sends data to current client, if not none
-async def send_data_to_client(data): 
+async def send_data_to_client(client, data): 
     if(client is None):
        print("no client!")
        return 
@@ -21,27 +21,31 @@ async def send_data_to_client(data):
 #Async function
 #Checks every second if keyword was detected.
 #If true, sends updated response to client
-async def keyword_detected():
+async def keyword_detected(transcriber_instance):
     while True:
-        if transcriber.keyword_detected:
+        if transcriber_instance.keyword_detected:
             print("keyword detected...")
-            transcriber.keyword_detected=False 
-            await send_data_to_client(transcriber.get_response())
+            transcriber_instance.keyword_detected=False 
+            await send_data_to_client(transcriber_instance.client, transcriber_instance.get_response())
         await asyncio.sleep(1)
 
 #Async function
 #Receives raw audio data from client and adds it to the Queue
 #Handles the channel closing and resets logs after client disconnects
-async def add_to_buffer(websocket, path, buffer):    
-    try:  
-        global client
-        client=websocket
+async def add_to_buffer(websocket, path):    
+    try:   
         clients.add(websocket) 
+        buffer = asyncio.Queue()  
+        transcriber_instance=Transcriber.create_and_return_stream(websocket)
+        write_to_stream=asyncio.create_task(write_queue_to_stream(transcriber_instance.stream, buffer)) 
+        check_for_keyword=asyncio.create_task(keyword_detected(transcriber_instance))
+        transcribe_from_stream=asyncio.create_task(transcriber_instance.recognize_from_stream())
+
         while True: 
             data = await websocket.recv()    
             data = json.loads(data) 
 
-            if data["type"]=="audio": 
+            if data["type"]=="audio":  
                 await buffer.put(bytes(data["payload"]))  
             elif data["type"]=="authentication": 
                 if db.authenticate_user(data["username"],data["password"]):
@@ -60,39 +64,40 @@ async def add_to_buffer(websocket, path, buffer):
     except websockets.exceptions.ConnectionClosedError:
         print("connection closed!")
     finally: 
-        clients.remove(websocket)
-        transcriber.clear_logs() 
+        clients.remove(websocket) 
 
 #Async function
 #Writes data from the Queue to the stream, which Azure API listens to.
-async def write_queue_to_stream(queue):
+async def write_queue_to_stream(stream, queue):
     try:
-        while True:
-            audio_data = await queue.get()
-            if audio_data is None:
-                print("nothing received, exiting loops")
-                break   
-            try:
-                transcriber.stream.write(audio_data) 
-            except Exception as e:
-                print("error: "+str(e))  
+        with wave.open("test.wav","wb") as output_file:
+            output_file.setnchannels(1)
+            output_file.setsampwidth(2)
+            output_file.setframerate(16000)
+            while True:
+                audio_data = await queue.get()
+                if audio_data is None:
+                    print("nothing received, exiting loops")
+                    break   
+                try: 
+                    stream.write(audio_data) 
+                except Exception as e:
+                    print("error: "+str(e))  
+                output_file.writeframes(audio_data)
 
     except asyncio.CancelledError:
         pass
 
 #Starts server.
 async def start_server(): 
-    ##initalize server and Queue for audio data
-    buffer = asyncio.Queue() 
-    server = await websockets.serve(lambda ws, path: add_to_buffer(ws, path, buffer),os.environ.get("IP_ADDRESS"), 3000)
+    ##initalize server and Queue for audio data 
+    server = await websockets.serve(lambda ws, path: add_to_buffer(ws, path),os.environ.get("IP_ADDRESS"), 3000)
  
-    #Start async functions
-    write_to_stream=asyncio.create_task(write_queue_to_stream(buffer))
-    speech_transcriber=asyncio.create_task(transcriber.recognize_from_stream())
-    check_for_keyword=asyncio.create_task(keyword_detected())
-    
-    print("WebSocket server started...")
-    await asyncio.gather(write_to_stream,speech_transcriber,check_for_keyword) 
+    print("WebSocket server started...") 
+    #Start async functions  
+    while(True):
+        await asyncio.sleep(0.5)
+     
  
 
 # Run the main function
