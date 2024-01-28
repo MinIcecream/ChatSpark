@@ -7,15 +7,13 @@ from dotenv import load_dotenv
 import database_interface as db
 import wave
  
-#Keeps track of current websocket client
-clients=set()
+usernames_map={} #maps username to websocket connection id
 
 #Sends data to current client, if not none
 async def send_data_to_client(client, data): 
     if(client is None):
        print("no client!")
-       return 
-    print("sending then,,...")
+       return  
     await client.send(data)
 
 #Async function
@@ -26,64 +24,80 @@ async def keyword_detected(transcriber_instance):
         if transcriber_instance.keyword_detected:
             print("keyword detected...")
             transcriber_instance.keyword_detected=False 
-            await send_data_to_client(transcriber_instance.client, transcriber_instance.get_response())
+            await send_data_to_client(usernames_map[transcriber_instance.client], transcriber_instance.get_response())
         await asyncio.sleep(1)
 
 #Async function
 #Receives raw audio data from client and adds it to the Queue
 #Handles the channel closing and resets logs after client disconnects
 async def add_to_buffer(websocket, path):    
-    try:   
-        clients.add(websocket) 
-        buffer = asyncio.Queue()  
-        transcriber_instance=Transcriber.create_and_return_stream(websocket)
-        write_to_stream=asyncio.create_task(write_queue_to_stream(transcriber_instance.stream, buffer)) 
-        check_for_keyword=asyncio.create_task(keyword_detected(transcriber_instance))
-        transcribe_from_stream=asyncio.create_task(transcriber_instance.recognize_from_stream())
+    user_authenticated=False
+    try:    
+        while not user_authenticated:
+            data = await websocket.recv()    
+            data = json.loads(data) 
+            if data["type"]=="authentication": 
+                if db.authenticate_user(data["username"],data["password"]):
+                    print("user logged in")
+                    await websocket.send("success")
+                    user_authenticated=True
+                else:
+                    if db.add_user_to_db(data["username"],data["password"]):
+                        print("user registered!")
+                        await websocket.send("success")
+                        user_authenticated=True
+                    else:
+                        await websocket.send("false")
+                        print("password incorrect!") 
+    except websockets.exceptions.ConnectionClosedOK:
+        print("connection closed!")
+        return
+    except websockets.exceptions.ConnectionClosedError:
+        print("connection closed!")
+        return
+    finally:  
+        pass
 
-        while True: 
+    client_username=data["username"]
+    usernames_map[client_username]=websocket
+    buffer = asyncio.Queue()  
+    transcriber_instance=Transcriber.create_and_return_stream(client_username)
+    write_to_stream=asyncio.create_task(write_queue_to_stream(transcriber_instance.stream, buffer)) 
+    check_for_keyword=asyncio.create_task(keyword_detected(transcriber_instance))
+    transcribe_from_stream=asyncio.create_task(transcriber_instance.recognize_from_stream())
+    db.clear_user_messages_from_db(client_username)
+    try:
+        while True:
             data = await websocket.recv()    
             data = json.loads(data) 
 
             if data["type"]=="audio":  
                 await buffer.put(bytes(data["payload"]))  
-            elif data["type"]=="authentication": 
-                if db.authenticate_user(data["username"],data["password"]):
-                    print("user logged in")
-                    await websocket.send("success")
-                else:
-                    if db.add_user_to_db(data["username"],data["password"]):
-                        print("user registered!")
-                        await websocket.send("success")
-                    else:
-                        await websocket.send("false")
-                        print("password incorrect!")
-
+            elif data["type"]=="recordingStatus":
+                if data["payload"]=="false":
+                    db.clear_user_messages_from_db(client_username
+                                                   )
     except websockets.exceptions.ConnectionClosedOK:
         print("connection closed!")
     except websockets.exceptions.ConnectionClosedError:
         print("connection closed!")
-    finally: 
-        clients.remove(websocket) 
+    finally:  
+        db.clear_user_messages_from_db(client_username)
+        usernames_map.pop(client_username,None)
 
 #Async function
 #Writes data from the Queue to the stream, which Azure API listens to.
 async def write_queue_to_stream(stream, queue):
-    try:
-        with wave.open("test.wav","wb") as output_file:
-            output_file.setnchannels(1)
-            output_file.setsampwidth(2)
-            output_file.setframerate(16000)
-            while True:
-                audio_data = await queue.get()
-                if audio_data is None:
-                    print("nothing received, exiting loops")
-                    break   
-                try: 
-                    stream.write(audio_data) 
-                except Exception as e:
-                    print("error: "+str(e))  
-                output_file.writeframes(audio_data)
+    try: 
+        while True:
+            audio_data = await queue.get()
+            if audio_data is None:
+                print("nothing received, exiting loops")
+                break   
+            try: 
+                stream.write(audio_data) 
+            except Exception as e:
+                print("error: "+str(e))   
 
     except asyncio.CancelledError:
         pass

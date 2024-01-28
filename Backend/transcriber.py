@@ -4,10 +4,9 @@ import chatbot
 import asyncio  
 import json
 import re
-import database_interface
+import database_interface as db
 
 class Transcriber:
-        
     def __init__(self, client):
         self.client=client
         self.response="Hey man!"
@@ -31,7 +30,7 @@ class Transcriber:
         if re.sub('[^a-zA-Z]', '', evt.result.text.lower()) ==self.keyword:
             self.keyword_detected=True
         else:
-            asyncio.create_task(self.save_message_to_logs(evt.result.speaker_id,evt.result.text))
+            asyncio.create_task(self.save_message_to_db(evt.result.speaker_id,evt.result.text))
 
     #Async function
     #Continuously reads from audio stream
@@ -75,18 +74,7 @@ class Transcriber:
             json.dump(messages, file, indent=2)
 
     #Saves a message to message logs. Used by transciber when a new message is transcribed.
-    async def save_message_to_logs(self, speaker, content):
-        global response
-        try:
-            with open("message_log.json", 'r') as file:
-                messages = json.load(file)
-        except:
-            messages=[]
-            
-        new_message={"role": "user", "content": speaker+": "+content}
-        messages.append(new_message)
-
-        with open('message_log.json', 'w') as file:
-            json.dump(messages, file, indent=2)   
-        self.response=await chatbot.generate_response(messages) 
+    async def save_message_to_db(self, speaker, content):
+        db.add_message_to_db(self.client, speaker + ": "+content) 
+        self.response=await chatbot.generate_response(self.client)  
     

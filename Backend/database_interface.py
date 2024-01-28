@@ -1,6 +1,6 @@
 import sqlite3
 
-connection=sqlite3.connect("user_messaging_system.db")
+connection=sqlite3.connect("user_messaging_system.db",check_same_thread=False)
 
 cursor=connection.cursor() 
 
@@ -58,3 +58,7 @@ def authenticate_user(username, password):
 def delete_all_users():
     cursor.execute("DELETE FROM users")
     connection.commit()
+
+def get_user_messages(user):
+    cursor.execute("SELECT message FROM messages WHERE client_username=:username",(user,))
+    return cursor.fetchall()

@@ -10,33 +10,66 @@ import 'package:web_socket_channel/io.dart';
 void main() {
   runApp(const MyApp());
 }
-
 class WebSocketManager {
-  StreamController controller = StreamController.broadcast();
+  StreamController? controller;
   static final WebSocketManager instance = WebSocketManager._internal();
-  late IOWebSocketChannel channel;
+  IOWebSocketChannel? channel;
 
   factory WebSocketManager() {
     return instance;
   }
 
-  WebSocketManager._internal();
-  void connect() {
+  WebSocketManager._internal() {
+    // Initialize the controller here
     controller = StreamController.broadcast();
-    channel = IOWebSocketChannel.connect(Uri.parse('ws://10.34.211.35:3000/'));
-    channel.stream.listen((data) {
-      controller.add(data);
-    }, onDone: () {
-      controller.close();
-    }, onError: (error) {
-      controller.addError(error);
-    });
   }
 
-  Stream get stream => controller.stream;
+  void connect() {
+    // Check if the channel is already open and return if so
+    if (channel != null) {
+      print("WebSocket already connected.");
+      return;
+    }
 
-  void disconnect(){
-    channel.sink.close();
+    // Establish a new WebSocket connection
+    channel = IOWebSocketChannel.connect(Uri.parse('ws://10.34.211.35:3000/'));
+
+    // Listen to the new channel
+    channel!.stream.listen((data) {
+      // Check if controller is closed, and if so, do not add data to it
+      if (!controller!.isClosed) {
+        controller!.add(data);
+      }
+    }, onDone: () {
+      // Close the controller when the WebSocket is done
+      if (!controller!.isClosed) {
+        controller!.close();
+      }
+    }, onError: (error) {
+      if (!controller!.isClosed) {
+        controller!.addError(error);
+      }
+    });
+
+    print("Connected to WebSocket.");
+  }
+
+  Stream get stream {
+    // Reinitialize the controller if it's closed
+    if (controller == null || controller!.isClosed) {
+      controller = StreamController.broadcast();
+    }
+    return controller!.stream;
+  }
+
+  void disconnect() {
+    // Close the WebSocket connection
+    if (channel != null) {
+      channel!.sink.close();
+      channel = null;
+    }
+
+    print("Disconnected from WebSocket.");
   }
 }
 
@@ -45,7 +78,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    WebSocketManager().connect();
     return const MaterialApp(
       home: LoginPage(),
     );
@@ -59,6 +91,7 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
+
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -67,8 +100,15 @@ class _LoginPageState extends State<LoginPage> {
 
   Future getAuthentication() async{
     var response= await WebSocketManager().stream.first;
-    print("WHAT???");
     return response;
+  }
+  @override
+  void initState() {
+    WebSocketManager().connect();
+    WebSocketManager().disconnect();
+    WebSocketManager().connect();
+    print("connecting to server.");
+    super.initState();
   }
   @override
   Widget build(BuildContext context) {
@@ -130,7 +170,8 @@ class _LoginPageState extends State<LoginPage> {
                     error=null;
                   });
                   var response;
-                  WebSocketManager().channel.sink.add('{"type": "authentication", "username": "$username", "password":"$password"}');
+                  WebSocketManager().channel!.sink.add('{"type": "authentication", "username": "$username", "password":"$password"}');
+                  print("last message...");
                   try{
                     response=await Future.any([
                       Future.delayed(const Duration(seconds:5)).then((_)=>null),
@@ -147,13 +188,11 @@ class _LoginPageState extends State<LoginPage> {
                       error="Error connecting to server";
                     });
                   }
-
                   else if (response == "success") {
                     print("YES");
                     setState(() {
                       error=null;
                     });
-
                     Navigator.push(context, MaterialPageRoute(builder: (context) => const MyHomePage()));
                   }
                   else
@@ -205,7 +244,7 @@ class _MyHomePageState extends State<MyHomePage> {
       });
       speak();
     }, onDone: () {
-      print("Disconnecting from channel");
+      WebSocketManager().connect();
     }, onError: (error) {
       throw "Error receiving data";
     });
@@ -227,6 +266,10 @@ class _MyHomePageState extends State<MyHomePage> {
     recorder.closeRecorder();
 
     player.dispose();
+    WebSocketManager().disconnect();
+    WebSocketManager().connect();
+    print("DONE CONNECTING");
+
     super.dispose();
   }
 
@@ -236,7 +279,7 @@ class _MyHomePageState extends State<MyHomePage> {
     recordingSubscription = recordingDataController.stream.listen((buffer) {
       if (buffer is FoodData) {
         var bufferData = buffer.data;
-        WebSocketManager().channel.sink.add('{"type": "audio", "payload": $bufferData}');
+        WebSocketManager().channel!.sink.add('{"type": "audio", "payload": $bufferData}');
       }
     });
     await recorder.startRecorder(
@@ -250,10 +293,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future stop() async {
     await recorder.stopRecorder();
+    WebSocketManager().channel!.sink.add('{"type": "recordingStatus", "payload": "false"}');
     if (recordingSubscription != null) {
       await recordingSubscription!.cancel();
       recordingSubscription = null;
     }
+    setState(() {
+      response="How was your day?";
+    });
   }
 
   Future speak() async {
@@ -267,6 +314,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
         backgroundColor: Colors.white70,
         appBar: AppBar(
@@ -275,8 +323,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         body: Center(
             child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
             Container(
                 width: 200,
                 height: 100,

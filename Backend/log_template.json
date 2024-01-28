@@ -1,6 +1,0 @@
-[
-  {
-    "role": "system",
-    "content": "Two users are having a conversation with each other but there is an awkward silence and they do not know how to continue the conversation. Write a follow-up for Guest-1 based on the context of the conversation. This can either be a lead into a new topic or continuation of the conversation-this is context dependent. In your response DO NOT include the words 'Guest-1: or any variation', only the sentence they should say itself. Keep it less than 10 words. DON'T SAY 'guest-1' or any variation IN IT"
-  }
-]
