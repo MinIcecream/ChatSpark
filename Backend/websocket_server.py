@@ -4,14 +4,18 @@ import transcriber
 import json
 import os 
 from dotenv import load_dotenv
+import database_interface as db
 
+client=None
 #Keeps track of current websocket client
-client=None 
+clients=set()
 
 #Sends data to current client, if not none
 async def send_data_to_client(data): 
     if(client is None):
+       print("no client!")
        return 
+    print("sending then,,...")
     await client.send(data)
 
 #Async function
@@ -20,6 +24,7 @@ async def send_data_to_client(data):
 async def keyword_detected():
     while True:
         if transcriber.keyword_detected:
+            print("keyword detected...")
             transcriber.keyword_detected=False 
             await send_data_to_client(transcriber.get_response())
         await asyncio.sleep(1)
@@ -28,23 +33,35 @@ async def keyword_detected():
 #Receives raw audio data from client and adds it to the Queue
 #Handles the channel closing and resets logs after client disconnects
 async def add_to_buffer(websocket, path, buffer):    
-    global client
     try:  
-        client = websocket
+        global client
+        client=websocket
+        clients.add(websocket) 
         while True: 
             data = await websocket.recv()    
-
             data = json.loads(data) 
+
             if data["type"]=="audio": 
                 await buffer.put(bytes(data["payload"]))  
+            elif data["type"]=="authentication": 
+                if db.authenticate_user(data["username"],data["password"]):
+                    print("user logged in")
+                    await websocket.send("success")
+                else:
+                    if db.add_user_to_db(data["username"],data["password"]):
+                        print("user registered!")
+                        await websocket.send("success")
+                    else:
+                        await websocket.send("false")
+                        print("password incorrect!")
 
     except websockets.exceptions.ConnectionClosedOK:
         print("connection closed!")
     except websockets.exceptions.ConnectionClosedError:
         print("connection closed!")
     finally: 
-        transcriber.clear_logs()
-        client=None
+        clients.remove(websocket)
+        transcriber.clear_logs() 
 
 #Async function
 #Writes data from the Queue to the stream, which Azure API listens to.
@@ -74,8 +91,8 @@ async def start_server():
     speech_transcriber=asyncio.create_task(transcriber.recognize_from_stream())
     check_for_keyword=asyncio.create_task(keyword_detected())
     
-    await asyncio.gather(write_to_stream,speech_transcriber,check_for_keyword)
     print("WebSocket server started...")
+    await asyncio.gather(write_to_stream,speech_transcriber,check_for_keyword) 
  
 
 # Run the main function
