@@ -90,6 +90,13 @@ async def add_to_buffer(websocket, path):
             elif data["type"]=="recordingStatus":
                 if data["payload"]=="false":
                     db.clear_user_messages_from_db(client_username)
+    
+
+    except websockets.exceptions.ConnectionClosedOK:
+        print("connection closed!") 
+    except websockets.exceptions.ConnectionClosedError:
+        print("connection closed!") 
+    
     finally:  
         #When client disconnects, remove them from the map and clear their messages
         db.clear_user_messages_from_db(client_username)

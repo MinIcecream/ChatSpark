@@ -6,10 +6,13 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+//ENTRY POINT OF FLUTTER APP
 void main() async{
   await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
+
+//SINGLETON THAT SAVES WEBSOCKET CHANNEL ACROSS PAGES
 class WebSocketManager {
   StreamController? controller;
   static final WebSocketManager instance = WebSocketManager._internal();
@@ -25,34 +28,24 @@ class WebSocketManager {
     controller = StreamController.broadcast();
   }
 
+  //Connects to channel and sets up stream controller
   void connect() {
     // Check if the channel is already open and return if so
     if (channel != null) {
-      print("WebSocket already connected.");
       return;
     }
 
     // Establish a new WebSocket connection
-    //channel = IOWebSocketChannel.connect(Uri.parse('ws://10.34.211.35:3000/'));
     channel = IOWebSocketChannel.connect(Uri.parse('ws://${address!}:3000/'));
+    controller = StreamController.broadcast();
     // Listen to the new channel
     channel!.stream.listen((data) {
       // Check if controller is closed, and if so, do not add data to it
       if (!controller!.isClosed) {
         controller!.add(data);
       }
-    }, onDone: () {
-      // Close the controller when the WebSocket is done
-      if (!controller!.isClosed) {
-        controller!.close();
-      }
-    }, onError: (error) {
-      if (!controller!.isClosed) {
-        controller!.addError(error);
-      }
-    });
+    },);
 
-    print("Connected to WebSocket.");
   }
 
   Stream get stream {
@@ -63,14 +56,17 @@ class WebSocketManager {
     return controller!.stream;
   }
 
+  //Disposes of channel and stream controller
   void disconnect() {
     // Close the WebSocket connection
     if (channel != null) {
       channel!.sink.close();
       channel = null;
     }
-
-    print("Disconnected from WebSocket.");
+    if(controller!=null){
+      controller!.close();
+      controller=null;
+    }
   }
 }
 
@@ -92,25 +88,97 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   String? error;
   bool buttonDisabled=false;
 
-  Future getAuthentication() async{
-    var response= await WebSocketManager().stream.first;
-    return response;
-  }
   @override
   void initState() {
-    WebSocketManager().connect();
-    WebSocketManager().disconnect();
-    WebSocketManager().connect();
-    print("connecting to server.");
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WebSocketManager().connect();
   }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // This block will execute when the LoginPage becomes visible again
+      WebSocketManager().connect();
+    }
+  }
+  //Authenticate button onClick.
+  Future onClick() async {
+    String password = passwordController.text;
+    String username = usernameController.text;
+    setState(() {
+      buttonDisabled=true;
+    });
+
+    //Verifying fields aren't ampty
+    if(username==""){
+      error="Username cannot be empty";
+      setState(() {});
+    }
+    else if(password==""){
+      error="Password cannot be empty";
+      setState(() {});
+    }
+    //Send data to server
+    else{
+      setState(() {
+        error=null;
+      });
+      var response;
+
+      WebSocketManager().connect();
+      WebSocketManager().channel!.sink.add('{"type": "authentication", "username": "$username", "password":"$password"}');
+
+      //Authenticating with server with timeout
+      try{
+        response=await Future.any([
+          Future.delayed(const Duration(seconds:12)).then((_)=>null),
+          WebSocketManager().stream.first,
+        ]);
+      }
+      catch(e){
+        throw("Error: $e");
+      }
+      //Server did not respond in time
+      if (response==null){
+        setState(() {
+          buttonDisabled=false;
+          error="Error connecting to server";
+        });
+      }
+      //Successfully authenticated
+      else if (response == "success") {
+        setState(() {
+          error=null;
+        });
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const MyHomePage()));
+      }
+      //Password incorrect
+      else
+      {
+        setState(() {
+          error = "Password incorrect";
+        });
+      }
+    }
+    setState(() {
+      buttonDisabled=false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,63 +219,7 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 32.0),
 
             TextButton(
-              onPressed:buttonDisabled? null:  () async {
-                String password = passwordController.text;
-                String username = usernameController.text;
-                setState(() {
-                  buttonDisabled=true;
-                });
-
-                if(username==""){
-                  error="Username cannot be empty";
-                  setState(() {});
-                }
-                else if(password==""){
-                  error="Password cannot be empty";
-                  setState(() {});
-                }
-                else{
-                  setState(() {
-                    error=null;
-                  });
-                  var response;
-                  WebSocketManager().channel!.sink.add('{"type": "authentication", "username": "$username", "password":"$password"}');
-                  print("last message...");
-                  try{
-                    response=await Future.any([
-                      Future.delayed(const Duration(seconds:5)).then((_)=>null),
-                      WebSocketManager().stream.first,
-                    ]);
-                  }
-                  catch(e){
-                    print("Error: $e");
-                  }
-                  print("done");
-                  if (response==null){
-                    setState(() {
-                      buttonDisabled=false;
-                      error="Error connecting to server";
-                    });
-                  }
-                  else if (response == "success") {
-                    print("YES");
-                    setState(() {
-                      error=null;
-                    });
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const MyHomePage()));
-                  }
-                  else
-                  {
-                    print("NO");
-                    setState(() {
-                      error = "Password incorrect";
-                    });
-                  }
-                }
-                setState(() {
-                  buttonDisabled=false;
-                });
-              },
+              onPressed:buttonDisabled? null : ()=>onClick(),
               child: const Text("Authenticate"),
             ),
           ],
@@ -238,19 +250,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
     flutterTts = FlutterTts();
     WebSocketManager().stream.listen((data) {
-      print("response recieved!");
       response = data;
       setState(() {
       });
       speak();
     }, onDone: () {
-      WebSocketManager().connect();
     }, onError: (error) {
       throw "Error receiving data";
     });
     initRecorder();
   }
 
+  //Gets mic permissions
   Future initRecorder() async {
     final status = await Permission.microphone.request();
 
@@ -261,17 +272,15 @@ class _MyHomePageState extends State<MyHomePage> {
     isRecorderReady = true;
   }
 
+  //Disposes of recorder and disconnects from server
   @override
   void dispose() {
     recorder.closeRecorder();
-
     WebSocketManager().disconnect();
-    WebSocketManager().connect();
-    print("DONE CONNECTING");
-
     super.dispose();
   }
 
+  //Records audio with mic
   Future record() async {
     assert(isRecorderReady);
     var recordingDataController = StreamController<Food>();
@@ -290,6 +299,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
+  //Stops recording
   Future stop() async {
     await recorder.stopRecorder();
     WebSocketManager().channel!.sink.add('{"type": "recordingStatus", "payload": "false"}');
@@ -302,13 +312,12 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  //Uses STT to play current response
   Future speak() async {
-    print("SPEAKING!");
     recorder.pauseRecorder();
     await flutterTts.awaitSpeakCompletion(true);
     await flutterTts.speak(response);
     recorder.resumeRecorder();
-    print("DONE SPEAKING!");
   }
 
   @override
@@ -318,7 +327,7 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.white70,
         appBar: AppBar(
           backgroundColor: Colors.orange,
-          title: const Text("Audio Recorder"),
+          title: const Text("Chatspark"),
         ),
         body: Center(
             child: Column(
