@@ -10,7 +10,7 @@ A conversational companion app that delivers prompts during conversations to pre
 
 **Backend Server:** Python, SQLite3
 
-**API Interfacing:** WebSockets, Azure STT, OpenAI API
+**API Connections:** WebSockets, Azure STT, OpenAI API
 
 &nbsp;
 
